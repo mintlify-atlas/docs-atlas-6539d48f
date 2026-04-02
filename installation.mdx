@@ -1,0 +1,122 @@
+---
+title: "Installation"
+description: "Install Habitat-Sim via conda, pip, or build from source"
+---
+
+Habitat-Sim version `0.3.3` supports Python 3.9+ on Linux and macOS.
+
+## Recommended: Conda
+
+Conda is the recommended installation method for most users.
+
+<Steps>
+  <Step title="Create a conda environment">
+    ```bash
+    conda create -n habitat python=3.12 cmake=3.27
+    conda activate habitat
+    ```
+  </Step>
+  <Step title="Install habitat-sim">
+    Choose the variant that matches your setup:
+
+    <Tabs>
+      <Tab title="With display (default)">
+        ```bash
+        conda install habitat-sim -c conda-forge -c aihabitat
+        ```
+      </Tab>
+      <Tab title="Headless (no display)">
+        For cluster machines without an attached display. Uses EGL — does not work on macOS.
+        ```bash
+        conda install habitat-sim headless -c conda-forge -c aihabitat
+        ```
+      </Tab>
+      <Tab title="With Bullet physics">
+        ```bash
+        conda install habitat-sim withbullet -c conda-forge -c aihabitat
+        ```
+      </Tab>
+      <Tab title="Headless + Bullet">
+        ```bash
+        conda install habitat-sim withbullet headless -c conda-forge -c aihabitat
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+<Note>
+  Build parameters can be chained. For example, to install with physics on headless machines: `conda install habitat-sim withbullet headless -c conda-forge -c aihabitat`
+</Note>
+
+### Nightly builds
+
+A nightly conda build for the `main` branch is available via the `aihabitat-nightly` channel:
+
+```bash
+conda install habitat-sim -c conda-forge -c aihabitat-nightly
+```
+
+Use nightly builds only if you need a feature not yet in the latest stable release.
+
+## PIP Install
+
+```bash
+git clone --branch stable https://github.com/facebookresearch/habitat-sim.git
+cd habitat-sim
+pip install . --no-build-isolation
+```
+
+To compile the latest `main` branch directly:
+
+```bash
+pip install git+https://github.com/facebookresearch/habitat-sim
+```
+
+For active development, use an editable install:
+
+```bash
+pip install -e . --no-build-isolation
+```
+
+### Build options via environment variables
+
+```bash
+HABITAT_BUILD_GUI_VIEWERS=OFF pip install . --no-build-isolation   # headless (no GUI)
+HABITAT_WITH_BULLET=OFF pip install . --no-build-isolation         # disable Bullet physics
+HABITAT_WITH_CUDA=ON pip install . --no-build-isolation            # enable CUDA
+HABITAT_WITH_AUDIO=ON pip install . --no-build-isolation           # enable audio (Linux only)
+```
+
+Options can be combined:
+
+```bash
+HABITAT_BUILD_GUI_VIEWERS=OFF HABITAT_WITH_CUDA=ON pip install . --no-build-isolation
+```
+
+## Build from Source
+
+See the [Build from Source guide](/guides/build-from-source) for full instructions including dependency installation on Linux and macOS.
+
+## Verifying Installation
+
+After installation, verify that Habitat-Sim is working:
+
+```python
+import habitat_sim
+print(habitat_sim.__version__)  # 0.3.3
+print("Bullet enabled:", habitat_sim.built_with_bullet)
+print("CUDA enabled:", habitat_sim.cuda_enabled)
+```
+
+## Requirements
+
+| Requirement | Version |
+|---|---|
+| Python | >= 3.9 |
+| CMake | >= 3.15 |
+| OS | Linux, macOS |
+
+<Note>
+  Audio sensor support is Linux-only. GPU-to-GPU tensor transfer requires CUDA support (`HABITAT_WITH_CUDA=ON`).
+</Note>

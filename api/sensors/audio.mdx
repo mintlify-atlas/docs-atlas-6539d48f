@@ -1,0 +1,92 @@
+---
+title: "AudioSensorSpec"
+description: "Spatial audio sensor via RLR Audio Propagation"
+---
+
+```python
+from habitat_sim import AudioSensorSpec, RLRAudioPropagationConfiguration, RLRAudioPropagationChannelLayout, RLRAudioPropagationChannelLayoutType
+```
+
+The audio sensor simulates spatial audio propagation in 3D environments using Meta's RLR Audio Propagation library.
+
+<Warning>
+  Audio sensor support requires:
+  - Linux (not supported on macOS)
+  - Habitat-Sim built with `HABITAT_WITH_AUDIO=ON`
+</Warning>
+
+Check at runtime:
+
+```python
+import habitat_sim
+print("Audio enabled:", habitat_sim.audio_enabled)
+```
+
+## AudioSensorSpec
+
+<ParamField path="uuid" type="str" required>
+  Unique identifier for this sensor.
+</ParamField>
+
+<ParamField path="position" type="List[float]">
+  Sensor position relative to the agent base.
+</ParamField>
+
+<ParamField path="acousticsConfig" type="RLRAudioPropagationConfiguration">
+  Audio propagation settings.
+</ParamField>
+
+<ParamField path="channelLayout" type="RLRAudioPropagationChannelLayout">
+  Output channel layout configuration.
+</ParamField>
+
+## RLRAudioPropagationConfiguration
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enableMaterials` | `bool` | `False` | Enable material-based acoustic absorption |
+| `enableDiffraction` | `bool` | `False` | Enable diffraction around geometry edges |
+| `enableDiffractionShortestPaths` | `bool` | `False` | Enable shortest diffraction paths |
+| `enableTransmission` | `bool` | `False` | Enable transmission through geometry |
+| `maxReceiverRadius` | `float` | `0.0` | Maximum receiver zone radius |
+| `indirectRayCount` | `int` | `512` | Number of indirect rays for reverberation |
+| `unitScale` | `float` | `1.0` | Unit scale factor |
+| `sampleRate` | `int` | `44100` | Audio sample rate |
+
+## RLRAudioPropagationChannelLayoutType
+
+| Value | Description |
+|---|---|
+| `Binaural` | Binaural stereo (head-related transfer function) |
+| `Mono` | Mono output |
+| `Stereo` | Standard stereo |
+| `Ambisonic` | First-order ambisonics |
+
+## Example
+
+```python
+import habitat_sim
+
+audio_spec = habitat_sim.AudioSensorSpec()
+audio_spec.uuid = "audio_sensor"
+audio_spec.position = [0.0, 1.5, 0.0]
+
+# Configure propagation
+audio_cfg = habitat_sim.RLRAudioPropagationConfiguration()
+audio_cfg.enableMaterials = True
+audio_cfg.enableDiffraction = True
+audio_cfg.indirectRayCount = 1024
+audio_spec.acousticsConfig = audio_cfg
+
+# Configure channel layout
+channel_layout = habitat_sim.RLRAudioPropagationChannelLayout()
+channel_layout.channelType = habitat_sim.RLRAudioPropagationChannelLayoutType.Binaural
+audio_spec.channelLayout = channel_layout
+
+agent_cfg.sensor_specifications = [audio_spec]
+```
+
+## See also
+
+- [Sensors overview](/api/sensors/overview)
+- [Build from Source](/guides/build-from-source)

@@ -1,0 +1,132 @@
+---
+title: "Navigation"
+description: "NavMesh pathfinding, geodesic distances, and the greedy geodesic follower"
+---
+
+Habitat-Sim includes a NavMesh-based navigation system for collision-aware pathfinding. The `PathFinder` computes shortest paths and geodesic distances, while the `GreedyGeodesicFollower` translates paths into discrete agent actions.
+
+## PathFinder
+
+The `PathFinder` is the primary interface for navigation queries.
+
+```python
+pathfinder = sim.pathfinder
+print("NavMesh loaded:", pathfinder.is_loaded)
+```
+
+### Sampling navigable points
+
+```python
+# Sample a random navigable point
+point = pathfinder.get_random_navigable_point()
+print("Navigable point:", point)
+
+# Check if a point is navigable
+is_nav = pathfinder.is_navigable(point)
+```
+
+### Shortest path queries
+
+```python
+path = habitat_sim.ShortestPath()
+path.requested_start = np.array([1.0, 0.0, 2.0])
+path.requested_end = np.array([4.0, 0.0, -1.0])
+
+found = pathfinder.find_path(path)
+if found:
+    print("Geodesic distance:", path.geodesic_distance)
+    print("Path points:", path.points)
+```
+
+### Multi-goal shortest path
+
+```python
+multi_path = habitat_sim.MultiGoalShortestPath()
+multi_path.requested_start = start_pos
+multi_path.requested_ends = [goal_a, goal_b, goal_c]
+
+found = pathfinder.find_path(multi_path)
+if found:
+    print("Closest goal:", multi_path.requested_ends[multi_path.closest_end_point_index])
+```
+
+### Geodesic distance
+
+```python
+dist = pathfinder.geodesic_distance(start_pos, end_pos)
+```
+
+### Snap to navmesh
+
+```python
+# Project any 3D point to the nearest navigable position
+nav_point = pathfinder.snap_point(arbitrary_point)
+```
+
+### NavMesh settings
+
+Recompute the NavMesh with custom settings:
+
+```python
+navmesh_settings = habitat_sim.NavMeshSettings()
+navmesh_settings.set_defaults()
+navmesh_settings.agent_height = 1.5
+navmesh_settings.agent_radius = 0.1
+navmesh_settings.agent_max_climb = 0.2
+
+sim.recompute_navmesh(sim.pathfinder, navmesh_settings)
+```
+
+## GreedyGeodesicFollower
+
+The `GreedyGeodesicFollower` generates a sequence of discrete actions (`move_forward`, `turn_left`, `turn_right`) that greedily follow the geodesic shortest path to a goal.
+
+```python
+follower = sim.make_greedy_follower(
+    agent_id=0,
+    goal_radius=0.2,
+    stop_key="stop",       # action key to stop (None = no stop action)
+    forward_key="move_forward",
+    left_key="turn_left",
+    right_key="turn_right",
+)
+
+# Get next action toward goal
+goal = np.array([4.0, 0.0, -1.0])
+action = follower.next_action_along(goal)
+
+# Get full action sequence
+actions = follower.find_path(goal)
+```
+
+### GreedyFollowerCodes
+
+When no action key is provided, `next_action_along` returns `GreedyFollowerCodes`:
+
+| Code | Meaning |
+|---|---|
+| `GreedyFollowerCodes.STOP` | Agent has reached the goal |
+| `GreedyFollowerCodes.FORWARD` | Move forward |
+| `GreedyFollowerCodes.LEFT` | Turn left |
+| `GreedyFollowerCodes.RIGHT` | Turn right |
+| `GreedyFollowerCodes.ERROR` | No valid path found |
+
+## HitRecord
+
+`pathfinder.closest_obstacle_surface_point()` returns a `HitRecord`:
+
+```python
+hit = pathfinder.closest_obstacle_surface_point(
+    position=np.array([1.0, 0.0, 2.0]),
+    max_search_radius=2.0,
+)
+print("Hit point:", hit.hit_pos)
+print("Hit normal:", hit.hit_normal)
+print("Hit distance:", hit.hit_dist)
+```
+
+## See also
+
+- [`PathFinder` API reference](/api/nav/pathfinder)
+- [`ShortestPath` API reference](/api/nav/shortest-path)
+- [`GreedyGeodesicFollower` API reference](/api/nav/greedy-follower)

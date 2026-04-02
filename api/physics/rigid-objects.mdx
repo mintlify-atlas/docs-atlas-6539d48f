@@ -1,0 +1,161 @@
+---
+title: "Rigid Objects"
+description: "API reference for rigid-body physics objects"
+---
+
+```python
+from habitat_sim.physics import (
+    ManagedRigidObject,
+    ManagedBulletRigidObject,
+    RigidObjectManager,
+    MotionType,
+    VelocityControl,
+)
+```
+
+Rigid objects are physics-enabled entities that can be placed in the scene, moved kinematically, or simulated under gravity and forces.
+
+## RigidObjectManager
+
+Access via the simulator:
+
+```python
+rigid_obj_mgr = sim.get_rigid_object_manager()
+```
+
+### add_object_by_template_id
+
+```python
+obj = rigid_obj_mgr.add_object_by_template_id(
+    template_id: int,
+    attachment_node: SceneNode | None = None,
+    light_setup_key: str = "",
+) -> ManagedRigidObject
+```
+
+Add a rigid object from a registered object template.
+
+### add_object_by_template_handle
+
+```python
+obj = rigid_obj_mgr.add_object_by_template_handle(
+    template_handle: str,
+) -> ManagedRigidObject
+```
+
+Add a rigid object by template handle (filename or name string).
+
+### remove_object
+
+```python
+rigid_obj_mgr.remove_object_by_id(object_id: int) -> None
+rigid_obj_mgr.remove_object_by_handle(object_handle: str) -> None
+```
+
+### get_all_object_handles / get_all_objects
+
+```python
+handles = rigid_obj_mgr.get_all_object_handles()
+objects = rigid_obj_mgr.get_all_objects()
+```
+
+### get_object_by_id
+
+```python
+obj = rigid_obj_mgr.get_object_by_id(object_id: int) -> ManagedRigidObject
+```
+
+## ManagedRigidObject
+
+Properties and methods available on each rigid object.
+
+### Pose
+
+```python
+obj.translation = [1.0, 0.5, 0.0]     # world-space position
+obj.rotation = mn.Quaternion.identity() # orientation
+obj.rigid_state                         # RigidState(translation, rotation)
+```
+
+### MotionType
+
+```python
+obj.motion_type = habitat_sim.physics.MotionType.DYNAMIC
+obj.motion_type = habitat_sim.physics.MotionType.KINEMATIC
+obj.motion_type = habitat_sim.physics.MotionType.STATIC
+```
+
+| Value | Description |
+|---|---|
+| `STATIC` | Not affected by forces; immovable |
+| `KINEMATIC` | Moved via API; not affected by gravity |
+| `DYNAMIC` | Fully simulated by Bullet Physics |
+
+### VelocityControl
+
+```python
+vel = obj.velocity_control
+
+# Linear velocity in world frame
+vel.controlling_lin_vel = True
+vel.lin_vel_is_local = False
+vel.lin_vel = [0.0, 0.0, -1.0]   # m/s
+
+# Angular velocity in world frame
+vel.controlling_ang_vel = True
+vel.ang_vel_is_local = False
+vel.ang_vel = [0.0, 0.5, 0.0]    # rad/s
+```
+
+### Linear and angular velocity (direct)
+
+```python
+obj.linear_velocity = [0.0, 0.0, -1.0]     # m/s (DYNAMIC only)
+obj.angular_velocity = [0.0, 0.5, 0.0]     # rad/s (DYNAMIC only)
+```
+
+### Object ID and handle
+
+```python
+print("Object ID:", obj.object_id)
+print("Object handle:", obj.handle)
+```
+
+### Collision group
+
+```python
+obj.override_collision_group(habitat_sim.physics.CollisionGroups.Default)
+```
+
+## Loading object templates
+
+Use the `ObjectAttributesManager` to register templates:
+
+```python
+obj_template_mgr = sim.get_object_template_manager()
+
+# Load from file
+template_ids = obj_template_mgr.load_configs("path/to/object.glb")
+template_id = template_ids[0]
+
+obj = rigid_obj_mgr.add_object_by_template_id(template_id)
+```
+
+## Raycast
+
+Cast a ray and find hit objects:
+
+```python
+ray = mn.Ray(origin=mn.Vector3(0, 2, 0), direction=mn.Vector3(0, -1, 0))
+results = sim.cast_ray(ray=ray, max_distance=5.0)
+
+if results.has_hits():
+    for hit in results.hits:
+        print("Hit object ID:", hit.object_id)
+        print("Hit distance:", hit.ray_distance)
+```
+
+## See also
+
+- [Articulated objects](/api/physics/articulated-objects)
+- [Physics concepts](/concepts/physics)

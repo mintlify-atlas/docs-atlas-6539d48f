@@ -1,0 +1,93 @@
+---
+title: "CameraSensorSpec"
+description: "API reference for the pinhole camera sensor"
+---
+
+```python
+from habitat_sim import CameraSensorSpec
+```
+
+`CameraSensorSpec` configures a standard pinhole perspective camera sensor. It can be used for RGB color, depth, semantic, or normal observations.
+
+## Fields
+
+Inherits all fields from `SensorSpec`, plus:
+
+<ParamField path="hfov" type="float">
+  Horizontal field of view in degrees. Default: `90`.
+</ParamField>
+
+<ParamField path="near" type="float">
+  Near clipping plane distance in meters. Default: `0.01`.
+</ParamField>
+
+<ParamField path="far" type="float">
+  Far clipping plane distance in meters. Default: `1000.0`.
+</ParamField>
+
+## RGB color sensor
+
+```python
+import habitat_sim
+
+rgb_spec = habitat_sim.CameraSensorSpec()
+rgb_spec.uuid = "color_sensor"
+rgb_spec.sensor_type = habitat_sim.SensorType.COLOR
+rgb_spec.resolution = [480, 640]       # [height, width]
+rgb_spec.position = [0.0, 1.5, 0.0]   # 1.5 m above agent base
+rgb_spec.hfov = 90                      # degrees
+```
+
+Output: `np.ndarray` of shape `[H, W, 4]`, dtype `uint8` (RGBA).
+
+## Depth sensor
+
+```python
+depth_spec = habitat_sim.CameraSensorSpec()
+depth_spec.uuid = "depth_sensor"
+depth_spec.sensor_type = habitat_sim.SensorType.DEPTH
+depth_spec.resolution = [480, 640]
+depth_spec.position = [0.0, 1.5, 0.0]
+```
+
+Output: `np.ndarray` of shape `[H, W]`, dtype `float32` (depth in meters).
+
+## Fisheye sensor
+
+For fisheye/wide-angle cameras, use `FisheyeSensorDoubleSphereSpec`:
+
+```python
+fisheye_spec = habitat_sim.FisheyeSensorDoubleSphereSpec()
+fisheye_spec.uuid = "fisheye_sensor"
+fisheye_spec.sensor_type = habitat_sim.SensorType.COLOR
+fisheye_spec.resolution = [512, 512]
+fisheye_spec.focal_length = [364.84, 364.86]       # [fx, fy] in pixels
+fisheye_spec.principal_point_offset = [0.0, 0.0]   # [cx, cy] offset in pixels
+fisheye_spec.position = [0.0, 1.5, 0.0]
+```
+
+## Equirectangular sensor
+
+For 360° panoramic images:
+
+```python
+equirect_spec = habitat_sim.EquirectangularSensorSpec()
+equirect_spec.uuid = "equirect_sensor"
+equirect_spec.sensor_type = habitat_sim.SensorType.COLOR
+equirect_spec.resolution = [256, 512]  # width is typically 2× height
+equirect_spec.position = [0.0, 1.5, 0.0]
+```
+
+## GPU-to-GPU transfer
+
+```python
+rgb_spec.gpu2gpu_transfer = True  # returns torch.Tensor on GPU
+```
+
+Requires `HABITAT_WITH_CUDA=ON`. See [GPU-to-GPU guide](/guides/gpu-to-gpu).
+
+## See also
+
+- [Depth sensor](/api/sensors/depth)
+- [Semantic sensor](/api/sensors/semantic)
+- [Sensors guide](/concepts/sensors)

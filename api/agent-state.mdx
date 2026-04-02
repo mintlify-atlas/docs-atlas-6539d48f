@@ -1,0 +1,88 @@
+---
+title: "AgentState"
+description: "API reference for habitat_sim.AgentState and SixDOFPose"
+---
+
+## AgentState
+
+```python
+from habitat_sim import AgentState
+```
+
+`AgentState` encodes the full 6-DOF pose of an agent and all its sensors.
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class AgentState:
+    position: np.ndarray  # shape (3,), xyz in world coordinates
+    rotation: Union[qt.quaternion, List]  # unit quaternion
+    sensor_states: Dict[str, SixDOFPose]  # uuid -> pose
+```
+
+### Fields
+
+<ParamField path="position" type="np.ndarray">
+  World-space position `[x, y, z]`. Default: `[0, 0, 0]`.
+</ParamField>
+
+<ParamField path="rotation" type="quaternion | List">
+  Unit quaternion representing orientation. Default: identity quaternion `(1, 0, 0, 0)`.
+</ParamField>
+
+<ParamField path="sensor_states" type="Dict[str, SixDOFPose]">
+  Dictionary mapping each sensor UUID to its `SixDOFPose`. Populated by `agent.get_state()`.
+</ParamField>
+
+### Example
+
+```python
+import habitat_sim
+import numpy as np
+import quaternion
+
+state = habitat_sim.AgentState()
+state.position = np.array([1.0, 0.0, 2.0])
+state.rotation = np.quaternion(1, 0, 0, 0)  # identity
+
+agent.set_state(state)
+
+# Read state
+current = agent.get_state()
+for uuid, sensor_pose in current.sensor_states.items():
+    print(f"Sensor {uuid}: pos={sensor_pose.position}, rot={sensor_pose.rotation}")
+```
+
+---
+
+## SixDOFPose
+
+```python
+from habitat_sim import SixDOFPose
+```
+
+Represents a position and orientation with 6 degrees of freedom.
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class SixDOFPose:
+    position: np.ndarray  # shape (3,), xyz
+    rotation: Union[qt.quaternion, List]  # unit quaternion
+```
+
+### Fields
+
+<ParamField path="position" type="np.ndarray">
+  World-space position `[x, y, z]`. Default: `[0, 0, 0]`.
+</ParamField>
+
+<ParamField path="rotation" type="quaternion | List">
+  Unit quaternion. Default: identity `(1, 0, 0, 0)`.
+</ParamField>
+
+### Example
+
+```python
+pose = habitat_sim.SixDOFPose()
+pose.position = np.array([0.0, 1.5, 0.0])
+pose.rotation = np.quaternion(1, 0, 0, 0)
+```

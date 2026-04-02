@@ -1,0 +1,106 @@
+---
+title: "Simulator"
+description: "Overview of the Habitat-Sim Simulator class and its architecture"
+---
+
+The `Simulator` class is the central entry point for all Habitat-Sim functionality. It ties together scene rendering, agent management, sensor observations, navigation, and physics simulation.
+
+## Architecture
+
+The Habitat-Sim backend is implemented in C++ and uses the [Magnum](https://github.com/mosra/magnum) graphics middleware for cross-platform rendering. The Python `Simulator` class wraps the C++ `SimulatorBackend` via pybind11.
+
+Key architectural properties:
+
+- **Memory-efficient resource management** — 3D geometry, textures, and shaders are cached and reused across scenes
+- **Flexible SceneGraph** — Objects are represented as `SceneNode` instances organized in a hierarchical `SceneGraph`
+- **Multi-sensor rendering** — Multi-attachment render passes minimize overhead when multiple sensors are active
+- **Multiple agents** — Arbitrary numbers of agents and sensors can be attached to a single scene
+
+## Creating a simulator
+
+```python
+import habitat_sim
+
+# Configure the backend
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_id = "path/to/scene.glb"
+sim_cfg.enable_physics = True  # requires Bullet
+
+# Configure agents
+agent_cfg = habitat_sim.AgentConfiguration()
+
+# Build the full configuration
+cfg = habitat_sim.Configuration(sim_cfg, [agent_cfg])
+
+# Create the simulator
+sim = habitat_sim.Simulator(cfg)
+```
+
+## Using as a context manager
+
+The simulator can be used as a context manager to ensure resources are properly released:
+
+```python
+with habitat_sim.Simulator(cfg) as sim:
+    observations = sim.step("move_forward")
+```
+
+## Key methods
+
+| Method | Description |
+|---|---|
+| `sim.reset()` | Reset all agents and return initial observations |
+| `sim.step(action)` | Execute action for default agent, return observations |
+| `sim.get_agent(agent_id)` | Get agent by ID |
+| `sim.initialize_agent(agent_id)` | Initialize agent and return `Agent` instance |
+| `sim.get_sensor_observations(agent_ids)` | Get sensor observations without stepping |
+| `sim.reconfigure(config)` | Reconfigure simulator with a new `Configuration` |
+| `sim.seed(new_seed)` | Set random seed |
+| `sim.close()` | Release all resources |
+
+## Reconfiguring
+
+You can change the scene or agent configuration without creating a new simulator:
+
+```python
+new_cfg = habitat_sim.Configuration(new_sim_cfg, [agent_cfg])
+sim.reconfigure(new_cfg)
+```
+
+## Multiple agents
+
+Pass multiple `AgentConfiguration` objects to support more than one agent:
+
+```python
+cfg = habitat_sim.Configuration(sim_cfg, [agent_cfg_0, agent_cfg_1])
+sim = habitat_sim.Simulator(cfg)
+
+agent_0 = sim.get_agent(0)
+agent_1 = sim.get_agent(1)
+
+# Step and get observations for a specific agent
+obs_0 = sim.get_sensor_observations(agent_ids=0)
+obs_1 = sim.get_sensor_observations(agent_ids=1)
+```
+
+## SimulatorConfiguration
+
+The `SimulatorConfiguration` (also accessible as `habitat_sim.sim.SimulatorConfiguration`) controls the backend:
+
+| Field | Type | Description |
+|---|---|---|
+| `scene_id` | `str` | Path to the scene file (`.glb`, `.gltf`, etc.) |
+| `enable_physics` | `bool` | Enable Bullet physics simulation |
+| `physics_config_file` | `str` | Path to physics configuration JSON |
+| `gpu_device_id` | `int` | GPU device index for rendering |
+| `random_seed` | `int` | Random seed for reproducibility |
+| `load_semantic_mesh` | `bool` | Load the semantic mesh for semantic sensors |
+| `frustum_culling` | `bool` | Enable frustum culling for rendering (default: `True`) |
+| `allow_sliding` | `bool` | Allow agent to slide along walls (default: `True`) |
+
+## See also
+
+- [`Simulator` API reference](/api/simulator)
+- [`Configuration` API reference](/api/configuration)
+- [Agents](/concepts/agents)
+- [Sensors](/concepts/sensors)

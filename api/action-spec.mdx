@@ -1,0 +1,127 @@
+---
+title: "ActionSpec"
+description: "API reference for habitat_sim.ActionSpec and ActuationSpec"
+---
+
+## ActionSpec
+
+```python
+from habitat_sim import ActionSpec
+```
+
+Defines how a specific agent action is implemented.
+
+```python
+@attr.s(auto_attribs=True)
+class ActionSpec:
+    name: str
+    actuation: Optional[ActuationSpec] = None
+```
+
+<ParamField path="name" type="str" required>
+  Name of the function registered in the `registry` that implements this action.
+</ParamField>
+
+<ParamField path="actuation" type="ActuationSpec | None">
+  Parameters passed to the action function. `None` for actions that take no parameters (e.g., `"stop"`).
+</ParamField>
+
+### Example
+
+```python
+import habitat_sim
+
+action_space = {
+    "move_forward": habitat_sim.ActionSpec(
+        "move_forward",
+        habitat_sim.ActuationSpec(amount=0.25),
+    ),
+    "turn_left": habitat_sim.ActionSpec(
+        "turn_left",
+        habitat_sim.ActuationSpec(amount=10.0),
+    ),
+    "stop": habitat_sim.ActionSpec("stop"),
+}
+```
+
+---
+
+## ActuationSpec
+
+```python
+from habitat_sim.agent.controls import ActuationSpec
+```
+
+Parameters for agent actuation.
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class ActuationSpec:
+    amount: float
+    constraint: Optional[float] = None
+```
+
+<ParamField path="amount" type="float" required>
+  Magnitude of the action. For translation actions, this is meters. For rotation actions, this is degrees.
+</ParamField>
+
+<ParamField path="constraint" type="float | None">
+  Optional constraint on the action (e.g., maximum look angle). Default: `None`.
+</ParamField>
+
+---
+
+## PyRobotNoisyActuationSpec
+
+```python
+from habitat_sim.agent.controls import PyRobotNoisyActuationSpec
+```
+
+Adds PyRobot-style actuation noise to simulate realistic robot motion.
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class PyRobotNoisyActuationSpec:
+    linear_gain: float = 1.0
+    linear_noise_multiplier: float = 1.0
+    rotation_gain: float = 1.0
+    rotation_noise_multiplier: float = 1.0
+```
+
+### Example
+
+```python
+from habitat_sim.agent.controls import PyRobotNoisyActuationSpec
+import habitat_sim
+
+noisy_spec = PyRobotNoisyActuationSpec(
+    linear_gain=1.0,
+    linear_noise_multiplier=0.01,
+    rotation_gain=1.0,
+    rotation_noise_multiplier=0.01,
+)
+
+action_space["noisy_forward"] = habitat_sim.ActionSpec(
+    "pyrobot_noisy_move_forward", noisy_spec
+)
+```
+
+---
+
+## Built-in actions
+
+The following action names are registered by default:
+
+| Action name | Type | Description |
+|---|---|---|
+| `move_forward` | body | Move agent forward |
+| `move_backward` | body | Move agent backward |
+| `move_left` | body | Strafe left |
+| `move_right` | body | Strafe right |
+| `move_up` | body | Move up |
+| `move_down` | body | Move down |
+| `turn_left` | body | Rotate agent left (yaw) |
+| `turn_right` | body | Rotate agent right (yaw) |
+| `look_up` | sensor | Tilt sensor upward (pitch) |
+| `look_down` | sensor | Tilt sensor downward (pitch) |
+| `stop` | body | No-op stop action |

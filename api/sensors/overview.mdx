@@ -1,0 +1,94 @@
+---
+title: "Sensors Overview"
+description: "Overview of sensor types and the SensorSpec base class"
+---
+
+```python
+from habitat_sim import SensorType, SensorSubType, SensorSpec
+```
+
+All sensors in Habitat-Sim are configured via `SensorSpec` subclasses and accessed via observation dictionaries keyed by UUID.
+
+## SensorType
+
+Specifies what physical quantity a sensor measures:
+
+| Value | Output dtype | Shape | Description |
+|---|---|---|---|
+| `COLOR` | `uint8` | `[H, W, 4]` | RGBA color image |
+| `DEPTH` | `float32` | `[H, W]` | Depth in meters |
+| `SEMANTIC` | `uint32` | `[H, W]` | Semantic instance IDs |
+| `NORMAL` | `float32` | `[H, W, 4]` | Surface normals |
+| `TENSOR` | varies | varies | Generic tensor output |
+
+## SensorSubType
+
+Specifies the geometric camera model:
+
+| Value | Description |
+|---|---|
+| `PINHOLE` | Standard perspective projection |
+| `FISHEYE` | Fisheye / wide-angle lens |
+| `EQUIRECTANGULAR` | 360° equirectangular panorama |
+| `ORTHOGRAPHIC` | Orthographic projection |
+
+## SensorSpec (base class)
+
+All sensor specs share these common fields:
+
+<ParamField path="uuid" type="str" required>
+  Unique identifier for this sensor. Used as the key in observation dictionaries.
+</ParamField>
+
+<ParamField path="sensor_type" type="SensorType" required>
+  Type of measurement (COLOR, DEPTH, SEMANTIC, NORMAL, TENSOR).
+</ParamField>
+
+<ParamField path="sensor_subtype" type="SensorSubType">
+  Geometric model. Default: `PINHOLE` for visual sensors.
+</ParamField>
+
+<ParamField path="position" type="List[float]">
+  Sensor position `[x, y, z]` relative to the agent's base. Default: `[0, 1.25, 0]`.
+</ParamField>
+
+<ParamField path="orientation" type="List[float]">
+  Sensor orientation as Euler angles `[roll, pitch, yaw]` in radians. Default: `[0, 0, 0]`.
+</ParamField>
+
+<ParamField path="resolution" type="List[int]">
+  Sensor resolution `[height, width]` in pixels. Default: `[128, 128]`.
+</ParamField>
+
+<ParamField path="gpu2gpu_transfer" type="bool">
+  Transfer observation directly to GPU memory as a `torch.Tensor`. Requires CUDA build. Default: `False`.
+</ParamField>
+
+## Available sensor specs
+
+| Class | Description |
+|---|---|
+| `CameraSensorSpec` | Pinhole camera (RGB, depth, semantic) |
+| `EquirectangularSensorSpec` | 360° equirectangular panorama |
+| `FisheyeSensorSpec` | Fisheye camera (base class) |
+| `FisheyeSensorDoubleSphereSpec` | Double sphere fisheye model |
+| `AudioSensorSpec` | Spatial audio via RLR propagation |
+
+## Sensor in the observation dict
+
+```python
+observations = sim.step("move_forward")
+
+# Each key is the sensor uuid
+color = observations["color_sensor"]    # np.ndarray [H, W, 4] uint8
+depth = observations["depth_sensor"]    # np.ndarray [H, W] float32
+semantic = observations["semantic"]     # np.ndarray [H, W] uint32
+```
+
+## See also
+
+- [Camera sensor](/api/sensors/camera)
+- [Depth sensor](/api/sensors/depth)
+- [Semantic sensor](/api/sensors/semantic)
+- [Audio sensor](/api/sensors/audio)
+- [Sensors guide](/concepts/sensors)

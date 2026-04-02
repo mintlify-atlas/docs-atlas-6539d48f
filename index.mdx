@@ -1,97 +1,76 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Habitat-Sim"
+description: "A high-performance physics-enabled 3D simulator for embodied AI research"
 ---
 
-## Setting up
+Habitat-Sim is a high-performance, physics-enabled 3D simulator built by Meta AI Research. It provides the simulation infrastructure for training and evaluating embodied AI agents in realistic 3D environments.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install via conda, pip, or build from source
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Run your first simulation in minutes
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Core Concepts" icon="book" href="/concepts/simulator">
+    Understand the simulator architecture
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="API Reference" icon="code" href="/api/simulator">
+    Full Python API documentation
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## What is Habitat-Sim?
 
-Everything you need to create world-class documentation.
+Habitat-Sim is a simulator designed for training and benchmarking embodied AI agents. It achieves several thousand frames per second (FPS) single-threaded and over 10,000 FPS multi-process on a single GPU when rendering from the Matterport3D dataset.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+Key capabilities:
 
-## Need inspiration?
+- **3D scene support** — Built-in support for HM3D, HSSD, Matterport3D, Gibson, Replica, and other datasets
+- **Configurable sensors** — RGB, depth, semantic, audio, fisheye, and equirectangular sensors
+- **Physics simulation** — Rigid-body and articulated object mechanics via Bullet Physics
+- **Robot support** — URDF-based robots including mobile manipulators, fixed-base arms, and quadrupeds
+- **NavMesh navigation** — Collision-aware pathfinding with geodesic distance computation
+- **Python API** — Full Python bindings backed by a high-performance C++ rendering engine
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Performance
+
+Habitat-Sim is designed for speed. On a Matterport3D scene with a single GPU:
+
+| Configuration | 128px | 256px | 512px |
+|---|---|---|---|
+| RGB (1 proc) | 4,093 FPS | 1,987 FPS | 848 FPS |
+| RGB (3 procs) | 10,638 FPS | 3,428 FPS | 2,068 FPS |
+| RGB + Depth (1 proc) | 2,050 FPS | 1,042 FPS | 423 FPS |
+| RGB + Depth + Semantics (1 proc) | 709 FPS | 596 FPS | 394 FPS |
+
+## Ecosystem
+
+Habitat-Sim is typically used alongside [Habitat-Lab](https://github.com/facebookresearch/habitat-lab), a high-level library for end-to-end embodied AI experiments including task definition, agent training, and evaluation.
+
+## Citing Habitat
+
+If you use Habitat-Sim in your research, please cite the relevant papers:
+
+```bibtex
+@misc{puig2023habitat3,
+  title  = {Habitat 3.0: A Co-Habitat for Humans, Avatars and Robots},
+  author = {Xavi Puig and Eric Undersander and Andrew Szot and others},
+  year   = {2023},
+  archivePrefix = {arXiv},
+}
+
+@inproceedings{szot2021habitat,
+  title     = {Habitat 2.0: Training Home Assistants to Rearrange their Habitat},
+  author    = {Andrew Szot and Alex Clegg and Eric Undersander and others},
+  booktitle = {NeurIPS},
+  year      = {2021}
+}
+
+@inproceedings{habitat19iccv,
+  title     = {Habitat: A Platform for Embodied AI Research},
+  author    = {Manolis Savva and Abhishek Kadian and Oleksandr Maksymets and others},
+  booktitle = {ICCV},
+  year      = {2019}
+}
+```

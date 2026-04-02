@@ -1,0 +1,135 @@
+---
+title: "Agents"
+description: "Configure and control agents in Habitat-Sim"
+---
+
+An `Agent` represents an embodied entity in the simulation. Agents are configured with a set of sensors and an action space, and can be moved through the scene by executing actions.
+
+## Agent configuration
+
+```python
+import habitat_sim
+import numpy as np
+
+agent_cfg = habitat_sim.AgentConfiguration()
+agent_cfg.height = 1.5        # agent body height in meters
+agent_cfg.radius = 0.1        # agent body radius for collision
+agent_cfg.sensor_specifications = [rgb_sensor_spec, depth_sensor_spec]
+agent_cfg.action_space = {
+    "move_forward": habitat_sim.ActionSpec(
+        "move_forward", habitat_sim.ActuationSpec(amount=0.25)
+    ),
+    "turn_left": habitat_sim.ActionSpec(
+        "turn_left", habitat_sim.ActuationSpec(amount=10.0)
+    ),
+    "turn_right": habitat_sim.ActionSpec(
+        "turn_right", habitat_sim.ActuationSpec(amount=10.0)
+    ),
+}
+```
+
+## Default action space
+
+If you do not specify an action space, the following defaults are used:
+
+| Action | Implementation | Default amount |
+|---|---|---|
+| `move_forward` | `move_forward` | 0.25 m |
+| `turn_left` | `turn_left` | 10.0 degrees |
+| `turn_right` | `turn_right` | 10.0 degrees |
+
+## Agent state
+
+`AgentState` encodes the full pose of the agent and all its sensors:
+
+```python
+state = habitat_sim.AgentState()
+state.position = np.array([1.0, 0.0, 2.0])  # world-space xyz
+state.rotation = np.quaternion(1, 0, 0, 0)   # unit quaternion
+
+# Apply state
+agent.set_state(state)
+
+# Retrieve current state
+current_state = agent.get_state()
+print(current_state.position)
+print(current_state.sensor_states)  # dict of SixDOFPose per sensor uuid
+```
+
+### SixDOFPose
+
+`SixDOFPose` represents a position and orientation with 6 degrees of freedom:
+
+```python
+pose = habitat_sim.SixDOFPose()
+pose.position = np.array([0.0, 1.5, 0.0])
+pose.rotation = np.quaternion(1, 0, 0, 0)
+```
+
+## Initializing an agent
+
+After creating the simulator, initialize the agent to place it in the scene:
+
+```python
+agent = sim.initialize_agent(agent_id=0)
+agent_state = habitat_sim.AgentState()
+agent_state.position = np.array([0.0, 0.0, 0.0])
+agent.set_state(agent_state)
+```
+
+## Executing actions
+
+Actions are executed via `agent.act()` or `sim.step()`:
+
+```python
+# Returns True if the action resulted in a collision
+did_collide = agent.act("move_forward")
+
+# Step the default agent and get observations
+observations = sim.step("move_forward")
+```
+
+## Custom actions
+
+Register custom actions via the `registry`:
+
+```python
+from habitat_sim.agent.controls.controls import SceneNodeControl
+from habitat_sim.registry import registry
+
+@registry.register_move_fn(body_action=True)
+class MoveUp(SceneNodeControl):
+    def __call__(self, scene_node, actuation_spec):
+        scene_node.translate_local([0, actuation_spec.amount, 0])
+
+# Add to action space
+agent_cfg.action_space["move_up"] = habitat_sim.ActionSpec(
+    "move_up", habitat_sim.ActuationSpec(amount=0.25)
+)
+```
+
+## Noisy actuation
+
+For realistic agent simulation, use `PyRobotNoisyActuationSpec` to add actuation noise:
+
+```python
+from habitat_sim.agent.controls import PyRobotNoisyActuationSpec
+
+noisy_spec = PyRobotNoisyActuationSpec(
+    linear_gain=1.0,
+    linear_noise_multiplier=0.01,
+    rotation_gain=1.0,
+    rotation_noise_multiplier=0.01,
+)
+
+agent_cfg.action_space["noisy_forward"] = habitat_sim.ActionSpec(
+    "pyrobot_noisy_move_forward", noisy_spec
+)
+```
+
+## See also
+
+- [`Agent` API reference](/api/agent)
+- [`AgentConfiguration` API reference](/api/agent-configuration)
+- [`AgentState` API reference](/api/agent-state)
+- [`ActionSpec` API reference](/api/action-spec)

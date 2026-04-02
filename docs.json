@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Habitat-Sim",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#E05A00",
+    "light": "#FF7A2F",
+    "dark": "#C04E00"
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -14,55 +14,75 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "installation",
+              "quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/simulator",
+              "concepts/agents",
+              "concepts/sensors",
+              "concepts/navigation",
+              "concepts/physics"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Guides",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "guides/datasets",
+              "guides/build-from-source",
+              "guides/gpu-to-gpu"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Simulator",
             "pages": [
-              "api-reference/introduction"
+              "api/simulator",
+              "api/configuration"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Agent",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/agent",
+              "api/agent-configuration",
+              "api/agent-state",
+              "api/action-spec"
+            ]
+          },
+          {
+            "group": "Sensors",
+            "pages": [
+              "api/sensors/overview",
+              "api/sensors/camera",
+              "api/sensors/depth",
+              "api/sensors/semantic",
+              "api/sensors/audio"
+            ]
+          },
+          {
+            "group": "Navigation",
+            "pages": [
+              "api/nav/pathfinder",
+              "api/nav/shortest-path",
+              "api/nav/greedy-follower"
+            ]
+          },
+          {
+            "group": "Physics",
+            "pages": [
+              "api/physics/rigid-objects",
+              "api/physics/articulated-objects"
             ]
           }
         ]
@@ -71,52 +91,34 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "GitHub",
+          "href": "https://github.com/facebookresearch/habitat-sim",
+          "icon": "github"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "AI Habitat",
+          "href": "https://aihabitat.org/",
+          "icon": "house"
         }
       ]
     }
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "Community",
+        "href": "https://github.com/facebookresearch/habitat-lab/discussions"
       }
     ],
     "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "type": "github",
+      "href": "https://github.com/facebookresearch/habitat-sim"
     }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/ai_habitat",
+      "github": "https://github.com/facebookresearch/habitat-sim"
     }
   }
 }

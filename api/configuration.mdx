@@ -1,0 +1,89 @@
+---
+title: "Configuration"
+description: "API reference for habitat_sim.Configuration and SimulatorConfiguration"
+---
+
+## Configuration
+
+```python
+from habitat_sim import Configuration
+```
+
+Ties together a `SimulatorConfiguration` and a list of `AgentConfiguration` objects.
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class Configuration:
+    sim_cfg: SimulatorConfiguration
+    agents: List[AgentConfiguration]
+    metadata_mediator: Optional[MetadataMediator] = None
+    enable_batch_renderer: bool = False
+```
+
+<ParamField path="sim_cfg" type="SimulatorConfiguration" required>
+  Configuration for the simulator backend.
+</ParamField>
+
+<ParamField path="agents" type="List[AgentConfiguration]" required>
+  List of agent configurations. At least one agent is required.
+</ParamField>
+
+<ParamField path="metadata_mediator" type="MetadataMediator | None">
+  An existing `MetadataMediator` to use for scene dataset management. Optional — the simulator creates one automatically if not provided.
+</ParamField>
+
+<ParamField path="enable_batch_renderer" type="bool">
+  Enable the batch renderer for high-throughput multi-scene rendering. Default: `False`.
+</ParamField>
+
+### Example
+
+```python
+import habitat_sim
+
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_id = "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+
+agent_cfg = habitat_sim.AgentConfiguration()
+
+cfg = habitat_sim.Configuration(sim_cfg, [agent_cfg])
+sim = habitat_sim.Simulator(cfg)
+```
+
+---
+
+## SimulatorConfiguration
+
+```python
+from habitat_sim.sim import SimulatorConfiguration
+# also accessible as:
+from habitat_sim.bindings import SimulatorConfiguration
+```
+
+Controls the simulator backend rendering and physics settings.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `scene_id` | `str` | `"data/test.glb"` | Path to the scene mesh file |
+| `scene_dataset_config_file` | `str` | `""` | Path to scene dataset config JSON for multi-scene use |
+| `enable_physics` | `bool` | `False` | Enable Bullet physics simulation |
+| `physics_config_file` | `str` | `"./data/default.physics_config.json"` | Path to physics config file |
+| `gpu_device_id` | `int` | `0` | GPU device index for rendering |
+| `random_seed` | `int` | `0` | Random seed |
+| `load_semantic_mesh` | `bool` | `False` | Load semantic mesh for semantic sensors |
+| `frustum_culling` | `bool` | `True` | Enable frustum culling |
+| `allow_sliding` | `bool` | `True` | Allow agent sliding along walls |
+| `create_renderer` | `bool` | `True` | Create a renderer (set to `False` for physics-only) |
+| `requires_textures` | `bool` | `True` | Load textures (set to `False` to save memory) |
+| `force_separate_semantic_scene_graph` | `bool` | `False` | Use a separate scene graph for semantic mesh |
+
+### Example
+
+```python
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_id = "data/scene_datasets/habitat-test-scenes/skokloster-castle.glb"
+sim_cfg.enable_physics = True
+sim_cfg.gpu_device_id = 0
+sim_cfg.random_seed = 42
+sim_cfg.load_semantic_mesh = True  # required for semantic sensors
+```

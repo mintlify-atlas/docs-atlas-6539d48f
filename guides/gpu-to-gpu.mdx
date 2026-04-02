@@ -1,0 +1,86 @@
+---
+title: "GPU-to-GPU Rendering"
+description: "Transfer rendered observations directly to PyTorch tensors via CUDA-GL Interop"
+---
+
+Habitat-Sim supports GPU-to-GPU tensor transfer, which renders observations directly into GPU memory without a CPU round-trip. This eliminates the memory copy bottleneck when feeding observations into deep learning models.
+
+## Requirements
+
+- Habitat-Sim built with `HABITAT_WITH_CUDA=ON`
+- PyTorch installed with CUDA support
+- GPU with CUDA capability
+
+Check CUDA support at runtime:
+
+```python
+import habitat_sim
+print("CUDA enabled:", habitat_sim.cuda_enabled)
+```
+
+## Enabling GPU-to-GPU transfer
+
+Set `gpu2gpu_transfer = True` on any sensor spec before creating the simulator:
+
+```python
+import habitat_sim
+
+rgb_spec = habitat_sim.CameraSensorSpec()
+rgb_spec.uuid = "color_sensor"
+rgb_spec.sensor_type = habitat_sim.SensorType.COLOR
+rgb_spec.resolution = [480, 640]
+rgb_spec.gpu2gpu_transfer = True  # Enable GPU-to-GPU
+
+depth_spec = habitat_sim.CameraSensorSpec()
+depth_spec.uuid = "depth_sensor"
+depth_spec.sensor_type = habitat_sim.SensorType.DEPTH
+depth_spec.resolution = [480, 640]
+depth_spec.gpu2gpu_transfer = True
+```
+
+## Receiving PyTorch tensors
+
+When `gpu2gpu_transfer` is enabled, observations are returned as `torch.Tensor` objects on the GPU instead of `numpy.ndarray` objects:
+
+```python
+observations = sim.step("move_forward")
+
+color_tensor = observations["color_sensor"]
+print(type(color_tensor))   # <class 'torch.Tensor'>
+print(color_tensor.device)  # cuda:0
+print(color_tensor.shape)   # torch.Size([480, 640, 4])
+
+depth_tensor = observations["depth_sensor"]
+print(depth_tensor.device)  # cuda:0
+print(depth_tensor.shape)   # torch.Size([480, 640])
+```
+
+## Mixed CPU and GPU sensors
+
+You can mix GPU and CPU sensors in the same agent. Only sensors with `gpu2gpu_transfer = True` return tensors:
+
+```python
+rgb_spec.gpu2gpu_transfer = True    # returns torch.Tensor
+depth_spec.gpu2gpu_transfer = False  # returns np.ndarray
+
+observations = sim.step("move_forward")
+print(type(observations["color_sensor"]))  # torch.Tensor
+print(type(observations["depth_sensor"]))  # numpy.ndarray
+```
+
+## Building with CUDA
+
+See [Build from Source](/guides/build-from-source) for full instructions. The key flag is:
+
+```bash
+HABITAT_WITH_CUDA=ON pip install . --no-build-isolation
+```
+
+<Warning>
+  GPU-to-GPU transfer does not work on macOS. It requires a Linux system with an NVIDIA GPU and CUDA driver installed.
+</Warning>
+
+## See also
+
+- [Sensors](/concepts/sensors)
+- [Build from Source](/guides/build-from-source)

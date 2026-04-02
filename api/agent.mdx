@@ -1,0 +1,127 @@
+---
+title: "Agent"
+description: "API reference for the habitat_sim.Agent class"
+---
+
+```python
+from habitat_sim import Agent
+```
+
+The `Agent` class represents an embodied agent in the simulation. It manages the agent's state, sensors, and action execution.
+
+## Constructor
+
+`Agent` instances are created by the simulator — do not instantiate directly:
+
+```python
+agent = sim.initialize_agent(agent_id=0)
+# or
+agent = sim.get_agent(agent_id=0)
+```
+
+## Instance methods
+
+### act
+
+```python
+agent.act(action_id: Any) -> bool
+```
+
+Execute the action identified by `action_id` from the agent's action space.
+
+<ParamField path="action_id" type="str | int" required>
+  A key in `agent_config.action_space`.
+</ParamField>
+
+Returns `True` if the action resulted in a collision with the environment.
+
+```python
+did_collide = agent.act("move_forward")
+```
+
+### get_state
+
+```python
+agent.get_state() -> AgentState
+```
+
+Return the current `AgentState`, including position, rotation, and all sensor states.
+
+```python
+state = agent.get_state()
+print(state.position)
+print(state.rotation)
+print(state.sensor_states)  # dict: uuid -> SixDOFPose
+```
+
+### set_state
+
+```python
+agent.set_state(
+    state: AgentState,
+    reset_sensors: bool = True,
+    infer_sensor_states: bool = True,
+    is_initial: bool = False,
+) -> None
+```
+
+Set the agent's pose.
+
+<ParamField path="state" type="AgentState" required>
+  Target state to apply.
+</ParamField>
+
+<ParamField path="reset_sensors" type="bool">
+  Reset sensors to their default intrinsic/extrinsic parameters before applying the new state. Default: `True`.
+</ParamField>
+
+<ParamField path="infer_sensor_states" type="bool">
+  Infer sensor positions from the new agent base position. Set to `False` to control sensor positions directly. Default: `True`.
+</ParamField>
+
+<ParamField path="is_initial" type="bool">
+  Mark this state as the agent's initial state for future resets. Default: `False`.
+</ParamField>
+
+### reconfigure
+
+```python
+agent.reconfigure(
+    agent_config: AgentConfiguration,
+    reconfigure_sensors: bool = True,
+) -> None
+```
+
+Reconfigure the agent with a new `AgentConfiguration`.
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `state` | `AgentState` | Get/set agent state (calls `get_state`/`set_state`) |
+| `agent_config` | `AgentConfiguration` | Current agent configuration |
+| `scene_node` | `SceneNode` | The scene node this agent is attached to |
+| `sensors` | `Dict[str, Any]` | Agent's sensor objects |
+| `initial_state` | `AgentState` | Initial state set during `set_state(is_initial=True)` |
+| `controls` | `ObjectControls` | Controls object for executing actions |
+
+## Example
+
+```python
+import habitat_sim
+import numpy as np
+
+agent = sim.initialize_agent(0)
+
+# Place agent at specific location
+state = habitat_sim.AgentState()
+state.position = np.array([1.0, 0.0, 2.0])
+agent.set_state(state)
+
+# Move agent
+did_collide = agent.act("move_forward")
+
+# Read state
+current_state = agent.get_state()
+print("Agent position:", current_state.position)
+```

@@ -1,0 +1,147 @@
+---
+title: "PathFinder"
+description: "API reference for NavMesh pathfinding"
+---
+
+```python
+from habitat_sim import PathFinder
+```
+
+`PathFinder` provides NavMesh-based navigation queries including shortest paths, geodesic distances, navigability checks, and random point sampling.
+
+Access via the simulator:
+
+```python
+pathfinder = sim.pathfinder
+```
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `is_loaded` | `bool` | Whether a NavMesh is currently loaded |
+| `navigable_area` | `float` | Total navigable area in square meters |
+| `bounds` | `Tuple[Vector3, Vector3]` | Axis-aligned bounding box of the NavMesh |
+
+## Methods
+
+### find_path
+
+```python
+pathfinder.find_path(path: ShortestPath) -> bool
+pathfinder.find_path(path: MultiGoalShortestPath) -> bool
+```
+
+Compute the shortest path between start and end points. Returns `True` if a valid path was found and updates the `path` object in-place.
+
+```python
+path = habitat_sim.ShortestPath()
+path.requested_start = np.array([1.0, 0.0, 2.0])
+path.requested_end = np.array([4.0, 0.0, -1.0])
+found = pathfinder.find_path(path)
+
+if found:
+    print("Geodesic distance:", path.geodesic_distance)
+    print("Waypoints:", path.points)
+```
+
+### geodesic_distance
+
+```python
+pathfinder.geodesic_distance(
+    position_a: np.ndarray,
+    position_b: Union[np.ndarray, List[np.ndarray]],
+) -> float
+```
+
+Compute the geodesic (walking) distance between two points. Pass a list of positions as `position_b` to compute the distance to the nearest point.
+
+```python
+dist = pathfinder.geodesic_distance(
+    np.array([1.0, 0.0, 2.0]),
+    np.array([4.0, 0.0, -1.0]),
+)
+```
+
+### get_random_navigable_point
+
+```python
+pathfinder.get_random_navigable_point(
+    max_tries: int = 10,
+    island_index: int = -1,
+) -> np.ndarray
+```
+
+Sample a uniformly random navigable point on the NavMesh. Returns a 3D position.
+
+```python
+point = pathfinder.get_random_navigable_point()
+```
+
+### is_navigable
+
+```python
+pathfinder.is_navigable(point: np.ndarray, max_y_delta: float = 0.5) -> bool
+```
+
+Check if a 3D point is on the navigable surface of the NavMesh.
+
+### snap_point
+
+```python
+pathfinder.snap_point(point: np.ndarray, island_index: int = -1) -> np.ndarray
+```
+
+Project any 3D point to the nearest navigable position on the NavMesh.
+
+```python
+nav_pos = pathfinder.snap_point(np.array([1.0, 2.0, 0.5]))
+```
+
+### closest_obstacle_surface_point
+
+```python
+pathfinder.closest_obstacle_surface_point(
+    position: np.ndarray,
+    max_search_radius: float = 2.0,
+) -> HitRecord
+```
+
+Find the nearest obstacle surface point from a given position.
+
+```python
+hit = pathfinder.closest_obstacle_surface_point(agent_pos, max_search_radius=3.0)
+print("Hit pos:", hit.hit_pos)
+print("Hit normal:", hit.hit_normal)
+print("Hit dist:", hit.hit_dist)
+```
+
+### save_nav_mesh / load_nav_mesh
+
+```python
+pathfinder.save_nav_mesh(path: str) -> None
+pathfinder.load_nav_mesh(path: str) -> None
+```
+
+Save and load the NavMesh to/from disk.
+
+## NavMeshSettings
+
+`NavMeshSettings` controls NavMesh computation parameters. Use `sim.recompute_navmesh()` to apply new settings:
+
+```python
+settings = habitat_sim.NavMeshSettings()
+settings.set_defaults()
+settings.agent_height = 1.5       # meters
+settings.agent_radius = 0.1       # meters
+settings.agent_max_climb = 0.2    # max step height (meters)
+settings.agent_max_slope = 45.0   # max walkable slope (degrees)
+
+sim.recompute_navmesh(sim.pathfinder, settings)
+```
+
+## See also
+
+- [Navigation guide](/concepts/navigation)
+- [ShortestPath reference](/api/nav/shortest-path)
+- [GreedyGeodesicFollower reference](/api/nav/greedy-follower)

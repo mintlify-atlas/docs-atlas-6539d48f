@@ -1,0 +1,188 @@
+---
+title: "Simulator"
+description: "API reference for the habitat_sim.Simulator class"
+---
+
+```python
+from habitat_sim import Simulator
+```
+
+The `Simulator` class is the core interface to Habitat-Sim. It extends `SimulatorBackend` with agent management, sensor access, and navigation utilities.
+
+## Constructor
+
+```python
+sim = habitat_sim.Simulator(config: Configuration)
+```
+
+<ParamField path="config" type="Configuration" required>
+  A `Configuration` object bundling the `SimulatorConfiguration` and a list of `AgentConfiguration` objects.
+</ParamField>
+
+## Instance methods
+
+### reset
+
+```python
+sim.reset(agent_ids=None) -> ObservationDict
+```
+
+Reset agents and return initial observations.
+
+<ParamField path="agent_ids" type="int | List[int] | None">
+  Agent ID(s) to reset. Pass `None` to reset all agents (default).
+</ParamField>
+
+### step
+
+```python
+sim.step(action: str | int, dt: float = 1/60) -> ObservationDict
+```
+
+Execute an action for the default agent and return observations.
+
+<ParamField path="action" type="str | int" required>
+  Action key from the agent's action space, or an integer action ID.
+</ParamField>
+
+<ParamField path="dt" type="float">
+  Physics simulation timestep in seconds (default: `1/60`).
+</ParamField>
+
+### get_agent
+
+```python
+sim.get_agent(agent_id: int) -> Agent
+```
+
+Return the `Agent` object for the given agent ID.
+
+### initialize_agent
+
+```python
+sim.initialize_agent(agent_id: int, initial_state: AgentState | None = None) -> Agent
+```
+
+Initialize an agent in the scene and optionally set its starting state.
+
+### get_sensor_observations
+
+```python
+sim.get_sensor_observations(agent_ids: int = 0) -> ObservationDict
+```
+
+Get sensor observations for the specified agent(s) without stepping physics.
+
+### reconfigure
+
+```python
+sim.reconfigure(config: Configuration) -> None
+```
+
+Reconfigure the simulator with a new configuration. This can change the scene or agent setup without creating a new `Simulator` instance.
+
+### seed
+
+```python
+sim.seed(new_seed: int) -> None
+```
+
+Set the random seed for reproducible simulations.
+
+### close
+
+```python
+sim.close(destroy: bool = True) -> None
+```
+
+Release all resources held by the simulator.
+
+### step_filter
+
+```python
+sim.step_filter(start_pos: Vector3, end_pos: Vector3) -> Vector3
+```
+
+Apply NavMesh collision filtering to a proposed movement. Returns the filtered end position.
+
+### make_greedy_follower
+
+```python
+sim.make_greedy_follower(
+    agent_id: int = 0,
+    goal_radius: float | None = None,
+    *,
+    stop_key: Any | None = None,
+    forward_key: Any | None = None,
+    left_key: Any | None = None,
+    right_key: Any | None = None,
+    fix_thrashing: bool = True,
+    thrashing_threshold: int = 16,
+) -> GreedyGeodesicFollower
+```
+
+Create a `GreedyGeodesicFollower` for the specified agent.
+
+### add_sensor / remove_sensor / get_sensor
+
+```python
+sim.add_sensor(spec: SensorSpec, agent_id: int = 0) -> None
+sim.remove_sensor(uuid: str) -> None
+sim.get_sensor(uuid: str) -> Sensor
+```
+
+Add, remove, or retrieve sensors at runtime.
+
+### render_sensors
+
+```python
+sim.render_sensors(agent_ids: int | List[int] = 0) -> ObservationDict
+```
+
+Render all sensor observations for the given agent(s).
+
+### start_async_render / get_sensor_observations_async_finish
+
+For performance-critical applications, use asynchronous rendering:
+
+```python
+sim.start_async_render(agent_ids=0)
+# ... do other work ...
+observations = sim.get_sensor_observations_async_finish()
+```
+
+### start_async_render_and_step_physics
+
+```python
+sim.start_async_render_and_step_physics(dt: float, agent_ids: int | List[int] = 0) -> None
+```
+
+Start async rendering and step physics simultaneously.
+
+## Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `pathfinder` | `PathFinder` | NavMesh pathfinder instance |
+| `config` | `Configuration` | Current simulator configuration |
+| `agents` | `List[Agent]` | List of all agents |
+| `sensors` | `Dict[str, Sensor]` | All sensors across all agents |
+
+## Context manager
+
+The `Simulator` supports use as a context manager:
+
+```python
+with habitat_sim.Simulator(cfg) as sim:
+    obs = sim.step("move_forward")
+```
+
+## ObservationDict
+
+`ObservationDict` is a type alias for:
+
+```python
+Dict[str, Union[bool, np.ndarray, torch.Tensor]]
+```
+
+Keys are sensor UUIDs. Values are `np.ndarray` by default, or `torch.Tensor` when GPU-to-GPU transfer is enabled.

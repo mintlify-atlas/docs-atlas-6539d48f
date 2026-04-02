@@ -1,0 +1,67 @@
+---
+title: "AgentConfiguration"
+description: "API reference for habitat_sim.AgentConfiguration"
+---
+
+```python
+from habitat_sim import AgentConfiguration
+```
+
+`AgentConfiguration` specifies the physical properties, sensors, and action space of an agent.
+
+## Definition
+
+```python
+@attr.s(auto_attribs=True, slots=True)
+class AgentConfiguration:
+    height: float = 1.5
+    radius: float = 0.1
+    sensor_specifications: List[SensorSpec] = []
+    action_space: Dict[str, ActionSpec] = _default_action_space()
+    body_type: str = "cylinder"
+```
+
+## Fields
+
+<ParamField path="height" type="float">
+  Height of the agent body in meters. Default: `1.5`.
+</ParamField>
+
+<ParamField path="radius" type="float">
+  Radius of the agent body cylinder for collision detection. Default: `0.1`.
+</ParamField>
+
+<ParamField path="sensor_specifications" type="List[SensorSpec]">
+  List of sensor specifications to attach to this agent. Default: empty list (no sensors).
+</ParamField>
+
+<ParamField path="action_space" type="Dict[str, ActionSpec]">
+  Action space mapping action names to `ActionSpec` instances. Default: `move_forward` (0.25 m), `turn_left` (10°), `turn_right` (10°).
+</ParamField>
+
+<ParamField path="body_type" type="str">
+  Shape of the agent body for collision detection. Default: `"cylinder"`.
+</ParamField>
+
+## Example
+
+```python
+import habitat_sim
+
+agent_cfg = habitat_sim.AgentConfiguration()
+agent_cfg.height = 1.5
+agent_cfg.radius = 0.1
+agent_cfg.sensor_specifications = [rgb_spec, depth_spec]
+agent_cfg.action_space = {
+    "move_forward": habitat_sim.ActionSpec(
+        "move_forward", habitat_sim.ActuationSpec(amount=0.25)
+    ),
+    "turn_left": habitat_sim.ActionSpec(
+        "turn_left", habitat_sim.ActuationSpec(amount=10.0)
+    ),
+    "turn_right": habitat_sim.ActionSpec(
+        "turn_right", habitat_sim.ActuationSpec(amount=10.0)
+    ),
+    "stop": habitat_sim.ActionSpec("stop"),
+}
+```

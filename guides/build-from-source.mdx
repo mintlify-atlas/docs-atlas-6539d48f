@@ -1,0 +1,127 @@
+---
+title: "Build from Source"
+description: "Compile Habitat-Sim from source with custom build options"
+---
+
+Building from source gives you full control over build options and enables development contributions.
+
+## Prerequisites
+
+| Tool | Minimum version |
+|---|---|
+| Python | 3.9 |
+| CMake | 3.22 |
+| GCC (Linux) | 7.4.0 |
+| conda | Latest |
+
+## Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone --branch stable https://github.com/facebookresearch/habitat-sim.git
+    cd habitat-sim
+    ```
+  </Step>
+  <Step title="Create conda environment">
+    ```bash
+    conda create -n habitat python=3.12 cmake=3.27
+    conda activate habitat
+    pip install -r requirements.txt
+    ```
+  </Step>
+  <Step title="Install system dependencies (Linux)">
+    ```bash
+    sudo apt-get update
+    sudo apt-get install -y --no-install-recommends \
+      libjpeg-dev libglm-dev libgl1-mesa-glx libegl1-mesa-dev \
+      mesa-utils xorg-dev freeglut3-dev
+    ```
+  </Step>
+  <Step title="Build Habitat-Sim">
+    <Tabs>
+      <Tab title="Default (GUI + Bullet)">
+        ```bash
+        pip install . --no-build-isolation
+        ```
+      </Tab>
+      <Tab title="Headless">
+        ```bash
+        HABITAT_BUILD_GUI_VIEWERS=OFF pip install . --no-build-isolation
+        ```
+      </Tab>
+      <Tab title="With CUDA">
+        ```bash
+        HABITAT_WITH_CUDA=ON pip install . --no-build-isolation
+        ```
+      </Tab>
+      <Tab title="With Audio">
+        ```bash
+        HABITAT_WITH_AUDIO=ON pip install . --no-build-isolation
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+## Build options
+
+All build options are controlled via environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `HABITAT_BUILD_GUI_VIEWERS` | `ON` | Build interactive GUI viewer |
+| `HABITAT_WITH_BULLET` | `ON` | Enable Bullet physics |
+| `HABITAT_WITH_CUDA` | `OFF` | Enable CUDA GPU rendering and GPU-to-GPU transfer |
+| `HABITAT_WITH_AUDIO` | `OFF` | Enable audio sensor (Linux only) |
+| `HABITAT_BUILD_TEST` | `OFF` | Build C++ test suite |
+| `HABITAT_BUILD_BASIS_COMPRESSOR` | `OFF` | Build Basis Universal texture compressor |
+| `HABITAT_BUILD_ASSIMP` | `ON` | Build Assimp for additional mesh format support |
+| `HABITAT_USE_SYSTEM_ASSIMP` | `OFF` | Use system Assimp instead of bundled |
+| `HABITAT_USE_SYSTEM_BULLET` | `OFF` | Use system Bullet instead of bundled |
+| `HABITAT_USE_SYSTEM_MAGNUM` | `OFF` | Use system Magnum instead of bundled |
+
+Options can be combined:
+
+```bash
+HABITAT_BUILD_GUI_VIEWERS=OFF HABITAT_WITH_CUDA=ON pip install . --no-build-isolation
+```
+
+## Editable installs (development)
+
+For active development, use an editable install. This rebuilds compiled extensions on demand:
+
+```bash
+pip install -e . --no-build-isolation
+```
+
+Or use the convenience script:
+
+```bash
+./build.sh
+```
+
+<Note>
+  Editable installs use scikit-build-core's "redirect" mode. Compiled extensions are served from the build directory while pure Python code is served from the source tree.
+</Note>
+
+## Running tests
+
+```bash
+# Download test data first
+python -m habitat_sim.utils.datasets_download \
+  --uids habitat_test_scenes \
+  --data-path data/
+
+# Run the test suite
+pytest tests/ -v
+```
+
+## CI dependencies
+
+The GitHub Actions workflows document the full set of dependencies used in CI on a clean Ubuntu VM. See [.github/workflows](https://github.com/facebookresearch/habitat-sim/blob/main/.github) for the canonical list.
+
+## See also
+
+- [Installation](/installation)
+- [GPU-to-GPU rendering](/guides/gpu-to-gpu)

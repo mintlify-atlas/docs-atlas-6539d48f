@@ -1,0 +1,186 @@
+---
+title: "Articulated Objects"
+description: "API reference for URDF-based articulated object simulation"
+---
+
+```python
+from habitat_sim.physics import (
+    ManagedArticulatedObject,
+    ManagedBulletArticulatedObject,
+    ArticulatedObjectManager,
+    JointType,
+    JointMotorSettings,
+    JointMotorType,
+)
+```
+
+Articulated objects support multi-body dynamics with joint constraints. They are loaded from URDF files and are commonly used to simulate robots.
+
+## ArticulatedObjectManager
+
+Access via the simulator:
+
+```python
+art_obj_mgr = sim.get_articulated_object_manager()
+```
+
+### add_articulated_object_from_urdf
+
+```python
+robot = art_obj_mgr.add_articulated_object_from_urdf(
+    filepath: str,
+    fixed_base: bool = False,
+    global_scale: float = 1.0,
+    mass_scale: float = 1.0,
+    force_reload: bool = False,
+    maintain_link_order: bool = False,
+    inertia_from_urdf: bool = False,
+    light_setup_key: str = "",
+) -> ManagedArticulatedObject
+```
+
+Load an articulated object from a URDF file.
+
+<ParamField path="filepath" type="str" required>
+  Path to the URDF robot description file.
+</ParamField>
+
+<ParamField path="fixed_base" type="bool">
+  Fix the base link in place (e.g., for fixed-base robot arms). Default: `False`.
+</ParamField>
+
+### remove_object
+
+```python
+art_obj_mgr.remove_object_by_id(object_id: int) -> None
+```
+
+## ManagedArticulatedObject
+
+### Pose and kinematics
+
+```python
+robot.translation = [0.0, 0.0, 0.0]
+robot.rotation = mn.Quaternion.identity()
+```
+
+### Joint positions and velocities
+
+```python
+# Get current joint positions (radians for revolute, meters for prismatic)
+joint_pos = robot.joint_positions  # List[float], length = num DOF
+
+# Set joint positions
+robot.joint_positions = [0.0, 1.57, -0.5, ...]
+
+# Joint velocities
+joint_vel = robot.joint_velocities
+robot.joint_velocities = [0.0] * robot.num_links
+```
+
+### Joint information
+
+```python
+print("Number of links:", robot.num_links)
+print("Number of DOF:", robot.num_dofs)
+
+# Link names
+for link_idx in range(robot.num_links):
+    link_name = robot.get_link_name(link_idx)
+    joint_type = robot.get_link_joint_type(link_idx)
+    print(f"Link {link_idx}: {link_name}, joint type: {joint_type}")
+```
+
+### JointType
+
+| Value | Description |
+|---|---|
+| `Fixed` | No DOF — rigid attachment |
+| `Revolute` | 1-DOF rotation around axis |
+| `Prismatic` | 1-DOF translation along axis |
+| `Ball` | 3-DOF spherical joint |
+| `Free` | 6-DOF free-floating joint |
+
+### Joint motors
+
+```python
+from habitat_sim.physics import JointMotorSettings, JointMotorType
+
+settings = habitat_sim.physics.JointMotorSettings()
+settings.motor_type = habitat_sim.physics.JointMotorType.Position
+settings.position_target = 1.57      # radians
+settings.max_impulse = 10.0          # N⋅m
+
+# Create motor on link (joint) index
+motor_id = robot.create_joint_motor(joint_index=0, settings=settings)
+
+# Update an existing motor
+robot.update_joint_motor(motor_id, settings)
+
+# Remove motor
+robot.remove_joint_motor(motor_id)
+```
+
+### JointMotorType
+
+| Value | Description |
+|---|---|
+| `Position` | Track a target joint position |
+| `Velocity` | Track a target joint velocity |
+
+### Link scene nodes
+
+```python
+# Get the SceneNode for a specific link
+link_node = robot.get_link_scene_node(link_index=0)
+link_pos = link_node.absolute_translation
+```
+
+## Rigid constraints between objects
+
+Link articulated objects to other objects:
+
+```python
+from habitat_sim.physics import RigidConstraintSettings, RigidConstraintType
+
+settings = habitat_sim.physics.RigidConstraintSettings()
+settings.object_id_a = robot.object_id
+settings.object_id_b = obj.object_id
+settings.link_id_a = 7  # end-effector link
+settings.constraint_type = habitat_sim.physics.RigidConstraintType.PointToPoint
+settings.pivot_a = [0.0, 0.0, 0.05]
+settings.pivot_b = [0.0, 0.0, 0.0]
+
+constraint_id = sim.create_rigid_constraint(settings)
+sim.remove_rigid_constraint(constraint_id)
+```
+
+### RigidConstraintType
+
+| Value | Description |
+|---|---|
+| `PointToPoint` | Ball-socket constraint between two pivot points |
+| `Fixed` | Fixed rigid attachment with no relative motion |
+
+## Example: Loading a robot
+
+```python
+import habitat_sim
+
+art_obj_mgr = sim.get_articulated_object_manager()
+
+robot = art_obj_mgr.add_articulated_object_from_urdf(
+    filepath="data/robots/fetch/fetch.urdf",
+    fixed_base=False,
+)
+robot.translation = [0.0, 0.0, 0.0]
+robot.motion_type = habitat_sim.physics.MotionType.DYNAMIC
+
+print("Loaded robot with", robot.num_links, "links")
+print("Joint positions:", robot.joint_positions)
+```
+
+## See also
+
+- [Rigid objects](/api/physics/rigid-objects)
+- [Physics concepts](/concepts/physics)

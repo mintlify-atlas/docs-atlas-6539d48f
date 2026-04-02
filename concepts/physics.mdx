@@ -1,0 +1,174 @@
+---
+title: "Physics"
+description: "Rigid-body and articulated object simulation with Bullet Physics"
+---
+
+Habitat-Sim integrates the [Bullet Physics](https://github.com/bulletphysics/bullet3) engine for rigid-body and articulated object simulation.
+
+<Note>
+  Physics simulation requires a Habitat-Sim build with Bullet enabled. Use `conda install habitat-sim withbullet` or `pip install . --no-build-isolation` (Bullet is enabled by default in pip builds).
+</Note>
+
+## Enabling physics
+
+```python
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_id = "path/to/scene.glb"
+sim_cfg.enable_physics = True
+```
+
+## Rigid objects
+
+Use the `RigidObjectManager` to add and manage rigid objects:
+
+```python
+rigid_obj_mgr = sim.get_rigid_object_manager()
+
+# Add an object from a template
+obj_template_mgr = sim.get_object_template_manager()
+template_id = obj_template_mgr.load_configs("path/to/object.glb")[0]
+
+obj = rigid_obj_mgr.add_object_by_template_id(template_id)
+obj.translation = [1.0, 1.0, 0.0]
+```
+
+### MotionType
+
+| `MotionType` | Description |
+|---|---|
+| `STATIC` | Immovable (e.g., furniture, stage) |
+| `KINEMATIC` | Moved manually via API, not affected by forces |
+| `DYNAMIC` | Fully simulated by Bullet — affected by gravity and collisions |
+
+```python
+obj.motion_type = habitat_sim.physics.MotionType.DYNAMIC
+```
+
+### VelocityControl
+
+Apply velocities to a dynamic object:
+
+```python
+vel_ctrl = obj.velocity_control
+vel_ctrl.controlling_lin_vel = True
+vel_ctrl.lin_vel = [0.0, 0.0, -1.0]  # m/s in world frame
+
+vel_ctrl.controlling_ang_vel = True
+vel_ctrl.ang_vel = [0.0, 0.5, 0.0]  # rad/s in world frame
+```
+
+### Physics stepping
+
+```python
+# Step physics for dt seconds (default: 1/60 s per step)
+sim.step_physics(dt=1.0 / 60.0)
+```
+
+### Contact detection
+
+```python
+# Check all active contacts
+contacts = sim.get_physics_contact_points()
+for contact in contacts:
+    print("Object A:", contact.object_id_a)
+    print("Object B:", contact.object_id_b)
+    print("Contact normal:", contact.contact_normal_on_b_in_ws)
+```
+
+## Articulated objects
+
+Articulated objects (robots with joints) are managed via `ArticulatedObjectManager`. They support URDF-based robot descriptions.
+
+```python
+art_obj_mgr = sim.get_articulated_object_manager()
+
+# Load a URDF robot
+robot = art_obj_mgr.add_articulated_object_from_urdf(
+    filepath="path/to/robot.urdf",
+    fixed_base=True,
+)
+robot.translation = [0.0, 0.0, 0.0]
+```
+
+### Joint types
+
+| `JointType` | Description |
+|---|---|
+| `Fixed` | No degrees of freedom |
+| `Revolute` | 1-DOF rotational joint |
+| `Prismatic` | 1-DOF linear joint |
+| `Ball` | 3-DOF spherical joint |
+| `Free` | 6-DOF free-floating joint |
+
+### Joint motor control
+
+```python
+motor_settings = habitat_sim.physics.JointMotorSettings()
+motor_settings.motor_type = habitat_sim.physics.JointMotorType.Position
+motor_settings.position_target = 1.57   # radians
+motor_settings.max_impulse = 10.0
+
+# Create motor on joint index 0
+motor_id = robot.create_joint_motor(joint_index=0, settings=motor_settings)
+```
+
+### Rigid constraints
+
+Link two objects with a rigid constraint:
+
+```python
+constraint_settings = habitat_sim.physics.RigidConstraintSettings()
+constraint_settings.object_id_a = obj_a.object_id
+constraint_settings.object_id_b = obj_b.object_id
+constraint_settings.constraint_type = habitat_sim.physics.RigidConstraintType.PointToPoint
+constraint_settings.pivot_a = [0.0, 0.0, 0.0]
+constraint_settings.pivot_b = [0.0, 0.5, 0.0]
+
+constraint_id = sim.create_rigid_constraint(constraint_settings)
+```
+
+## Raycasting
+
+Cast a ray into the physics world:
+
+```python
+import magnum as mn
+
+ray = mn.Range3D(
+    mn.Vector3(0.0, 1.5, 0.0),   # ray origin
+    mn.Vector3(0.0, -1.0, 0.0),  # ray direction
+)
+results = sim.cast_ray(ray, max_distance=10.0)
+
+if results.has_hits():
+    for hit in results.hits:
+        print("Hit object:", hit.object_id)
+        print("Hit distance:", hit.ray_distance)
+        print("Hit point:", hit.point)
+```
+
+## Collision groups
+
+`CollisionGroups` and `CollisionGroupHelper` let you control which objects collide with each other:
+
+```python
+obj.override_collision_group(habitat_sim.physics.CollisionGroups.Default)
+```
+
+## Physics libraries
+
+The `PhysicsSimulationLibrary` enum identifies the physics backend in use:
+
+| Value | Description |
+|---|---|
+| `BulletPhysics` | Bullet physics engine |
+| `NoPhysics` | No physics (kinematic only) |
+
+```python
+print("Physics library:", sim.get_physics_simulation_library())
+```
+
+## See also
+
+- [Rigid objects API reference](/api/physics/rigid-objects)
+- [Articulated objects API reference](/api/physics/articulated-objects)

@@ -1,0 +1,158 @@
+---
+title: "Sensors"
+description: "Configure RGB, depth, semantic, fisheye, equirectangular, and audio sensors"
+---
+
+Habitat-Sim supports a variety of sensor types that can be attached to agents or placed at arbitrary positions in the scene.
+
+## Sensor types
+
+| `SensorType` | Description |
+|---|---|
+| `COLOR` | RGB or RGBA color image |
+| `DEPTH` | Depth image (float32, meters) |
+| `SEMANTIC` | Semantic instance segmentation mask (uint32) |
+| `NORMAL` | Surface normal image |
+| `TENSOR` | Generic tensor sensor |
+
+## Sensor subtypes
+
+| `SensorSubType` | Description |
+|---|---|
+| `PINHOLE` | Standard perspective camera |
+| `FISHEYE` | Fisheye / wide-angle camera |
+| `EQUIRECTANGULAR` | 360° equirectangular panorama |
+| `ORTHOGRAPHIC` | Orthographic projection |
+
+## Camera sensor
+
+`CameraSensorSpec` is the most common sensor type. It uses a pinhole camera model.
+
+```python
+import habitat_sim
+
+rgb_spec = habitat_sim.CameraSensorSpec()
+rgb_spec.uuid = "color_sensor"
+rgb_spec.sensor_type = habitat_sim.SensorType.COLOR
+rgb_spec.sensor_subtype = habitat_sim.SensorSubType.PINHOLE
+rgb_spec.resolution = [480, 640]          # [height, width]
+rgb_spec.position = [0.0, 1.5, 0.0]      # relative to agent base
+rgb_spec.orientation = [0.0, 0.0, 0.0]   # euler angles in radians
+rgb_spec.hfov = 90                         # horizontal field of view (degrees)
+```
+
+### Depth sensor
+
+```python
+depth_spec = habitat_sim.CameraSensorSpec()
+depth_spec.uuid = "depth_sensor"
+depth_spec.sensor_type = habitat_sim.SensorType.DEPTH
+depth_spec.resolution = [480, 640]
+depth_spec.position = [0.0, 1.5, 0.0]
+```
+
+### Semantic sensor
+
+```python
+semantic_spec = habitat_sim.CameraSensorSpec()
+semantic_spec.uuid = "semantic_sensor"
+semantic_spec.sensor_type = habitat_sim.SensorType.SEMANTIC
+semantic_spec.resolution = [480, 640]
+semantic_spec.position = [0.0, 1.5, 0.0]
+```
+
+<Note>
+  Semantic sensors require `sim_cfg.load_semantic_mesh = True` and a scene dataset that includes semantic annotations (e.g., Matterport3D).
+</Note>
+
+## Fisheye sensor
+
+`FisheyeSensorSpec` and `FisheyeSensorDoubleSphereSpec` support fisheye camera models.
+
+```python
+fisheye_spec = habitat_sim.FisheyeSensorDoubleSphereSpec()
+fisheye_spec.uuid = "fisheye_sensor"
+fisheye_spec.sensor_type = habitat_sim.SensorType.COLOR
+fisheye_spec.resolution = [512, 512]
+fisheye_spec.focal_length = [364.84, 364.86]  # [fx, fy] in pixels
+fisheye_spec.principal_point_offset = [0.0, 0.0]
+fisheye_spec.position = [0.0, 1.5, 0.0]
+```
+
+## Equirectangular sensor
+
+`EquirectangularSensorSpec` captures a 360° panoramic image.
+
+```python
+equirect_spec = habitat_sim.EquirectangularSensorSpec()
+equirect_spec.uuid = "equirect_sensor"
+equirect_spec.sensor_type = habitat_sim.SensorType.COLOR
+equirect_spec.resolution = [256, 512]  # [height, width] — width is typically 2x height
+equirect_spec.position = [0.0, 1.5, 0.0]
+```
+
+## Audio sensor
+
+The `AudioSensorSpec` enables spatial audio simulation via the RLR Audio Propagation library.
+
+<Warning>
+  Audio sensor support requires Linux and a build compiled with `HABITAT_WITH_AUDIO=ON`.
+</Warning>
+
+```python
+audio_spec = habitat_sim.AudioSensorSpec()
+audio_spec.uuid = "audio_sensor"
+audio_spec.position = [0.0, 1.5, 0.0]
+
+# Configure audio propagation
+audio_cfg = habitat_sim.RLRAudioPropagationConfiguration()
+audio_cfg.enableMaterials = True
+audio_spec.acousticsConfig = audio_cfg
+
+# Configure channel layout
+channel_layout = habitat_sim.RLRAudioPropagationChannelLayout()
+channel_layout.channelType = habitat_sim.RLRAudioPropagationChannelLayoutType.Binaural
+audio_spec.channelLayout = channel_layout
+```
+
+## GPU-to-GPU transfer
+
+When compiled with CUDA support, sensor observations can be transferred directly to a PyTorch tensor without a CPU round-trip:
+
+```python
+rgb_spec.gpu2gpu_transfer = True
+```
+
+This requires `HABITAT_WITH_CUDA=ON` at build time. See the [GPU-to-GPU guide](/guides/gpu-to-gpu).
+
+## Accessing observations
+
+After stepping the simulation, observations are returned as a dictionary keyed by `uuid`:
+
+```python
+observations = sim.step("move_forward")
+
+color_img = observations["color_sensor"]    # np.ndarray [H, W, 4] uint8
+depth_img = observations["depth_sensor"]    # np.ndarray [H, W] float32
+semantic = observations["semantic_sensor"]  # np.ndarray [H, W] uint32
+```
+
+## Adding and removing sensors at runtime
+
+```python
+# Add a sensor dynamically
+new_spec = habitat_sim.CameraSensorSpec()
+new_spec.uuid = "new_sensor"
+new_spec.sensor_type = habitat_sim.SensorType.COLOR
+new_spec.resolution = [256, 256]
+sim.add_sensor(new_spec, agent_id=0)
+
+# Remove a sensor
+sim.remove_sensor("new_sensor")
+```
+
+## See also
+
+- [Sensor API reference](/api/sensors/overview)
+- [`CameraSensorSpec` reference](/api/sensors/camera)
+- [GPU-to-GPU guide](/guides/gpu-to-gpu)

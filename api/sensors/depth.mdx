@@ -1,0 +1,64 @@
+---
+title: "Depth Sensor"
+description: "Configuring depth sensors in Habitat-Sim"
+---
+
+A depth sensor in Habitat-Sim uses the same `CameraSensorSpec` as the color camera, but with `sensor_type` set to `SensorType.DEPTH`.
+
+## Configuration
+
+```python
+import habitat_sim
+
+depth_spec = habitat_sim.CameraSensorSpec()
+depth_spec.uuid = "depth_sensor"
+depth_spec.sensor_type = habitat_sim.SensorType.DEPTH
+depth_spec.resolution = [480, 640]        # [height, width]
+depth_spec.position = [0.0, 1.5, 0.0]    # meters above agent base
+depth_spec.hfov = 90                       # horizontal field of view (degrees)
+```
+
+## Output
+
+Depth observations are returned as `np.ndarray` of shape `[H, W]`, dtype `float32`.
+
+Values represent the metric depth in **meters** along the z-axis (distance from camera plane, not Euclidean distance).
+
+```python
+observations = sim.step("move_forward")
+depth = observations["depth_sensor"]   # shape [H, W], float32
+
+print("Min depth:", depth.min())
+print("Max depth:", depth.max())
+print("Depth at center:", depth[240, 320])
+```
+
+<Note>
+  Pixels with no geometry (sky, far background) return the far clipping plane distance. Pixels occluded by the near clipping plane return 0.0.
+</Note>
+
+## RGBD setup
+
+A common configuration pairs an RGB and depth sensor at the same eye position:
+
+```python
+rgb_spec = habitat_sim.CameraSensorSpec()
+rgb_spec.uuid = "color_sensor"
+rgb_spec.sensor_type = habitat_sim.SensorType.COLOR
+rgb_spec.resolution = [480, 640]
+rgb_spec.position = [0.0, 1.5, 0.0]
+
+depth_spec = habitat_sim.CameraSensorSpec()
+depth_spec.uuid = "depth_sensor"
+depth_spec.sensor_type = habitat_sim.SensorType.DEPTH
+depth_spec.resolution = [480, 640]
+depth_spec.position = [0.0, 1.5, 0.0]
+
+agent_cfg.sensor_specifications = [rgb_spec, depth_spec]
+```
+
+## See also
+
+- [CameraSensorSpec](/api/sensors/camera)
+- [Semantic sensor](/api/sensors/semantic)
+- [Sensors guide](/concepts/sensors)

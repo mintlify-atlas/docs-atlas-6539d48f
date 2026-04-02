@@ -1,0 +1,125 @@
+---
+title: "ShortestPath"
+description: "API reference for ShortestPath and MultiGoalShortestPath"
+---
+
+## ShortestPath
+
+```python
+from habitat_sim import ShortestPath
+```
+
+Holds the inputs and outputs of a single-goal pathfinding query. Pass to `pathfinder.find_path()`.
+
+### Fields
+
+<ParamField path="requested_start" type="np.ndarray" required>
+  Start position `[x, y, z]` in world coordinates.
+</ParamField>
+
+<ParamField path="requested_end" type="np.ndarray" required>
+  Goal position `[x, y, z]` in world coordinates.
+</ParamField>
+
+<ParamField path="points" type="List[np.ndarray]">
+  **Output.** List of 3D waypoints forming the path from start to goal. Populated after a successful `find_path` call.
+</ParamField>
+
+<ParamField path="geodesic_distance" type="float">
+  **Output.** Total geodesic distance of the found path in meters. Set to `inf` if no path is found.
+</ParamField>
+
+### Example
+
+```python
+import habitat_sim
+import numpy as np
+
+path = habitat_sim.ShortestPath()
+path.requested_start = np.array([1.0, 0.0, 2.0])
+path.requested_end = np.array([4.0, 0.0, -1.0])
+
+found = pathfinder.find_path(path)
+
+if found:
+    print("Geodesic distance:", path.geodesic_distance)
+    print("Number of waypoints:", len(path.points))
+    for i, point in enumerate(path.points):
+        print(f"  Waypoint {i}: {point}")
+else:
+    print("No path found")
+```
+
+---
+
+## MultiGoalShortestPath
+
+```python
+from habitat_sim import MultiGoalShortestPath
+```
+
+Finds the shortest path from a start position to the nearest of multiple goal positions.
+
+### Fields
+
+<ParamField path="requested_start" type="np.ndarray" required>
+  Start position `[x, y, z]`.
+</ParamField>
+
+<ParamField path="requested_ends" type="List[np.ndarray]" required>
+  List of candidate goal positions.
+</ParamField>
+
+<ParamField path="points" type="List[np.ndarray]">
+  **Output.** Waypoints of the shortest path to the nearest goal.
+</ParamField>
+
+<ParamField path="geodesic_distance" type="float">
+  **Output.** Distance to the nearest reachable goal.
+</ParamField>
+
+<ParamField path="closest_end_point_index" type="int">
+  **Output.** Index into `requested_ends` of the nearest goal.
+</ParamField>
+
+### Example
+
+```python
+import habitat_sim
+import numpy as np
+
+multi_path = habitat_sim.MultiGoalShortestPath()
+multi_path.requested_start = np.array([1.0, 0.0, 2.0])
+multi_path.requested_ends = [
+    np.array([4.0, 0.0, -1.0]),
+    np.array([-2.0, 0.0, 3.0]),
+    np.array([0.0, 0.0, 5.0]),
+]
+
+found = pathfinder.find_path(multi_path)
+
+if found:
+    closest_idx = multi_path.closest_end_point_index
+    closest_goal = multi_path.requested_ends[closest_idx]
+    print("Nearest goal:", closest_goal)
+    print("Geodesic distance:", multi_path.geodesic_distance)
+```
+
+## HitRecord
+
+```python
+from habitat_sim.nav import HitRecord
+```
+
+Result returned by `pathfinder.closest_obstacle_surface_point()`.
+
+| Field | Type | Description |
+|---|---|---|
+| `hit_pos` | `np.ndarray` | 3D position of the obstacle surface point |
+| `hit_normal` | `np.ndarray` | Surface normal at the hit point |
+| `hit_dist` | `float` | Distance from query point to hit point |
+
+## See also
+
+- [PathFinder reference](/api/nav/pathfinder)
+- [Navigation guide](/concepts/navigation)

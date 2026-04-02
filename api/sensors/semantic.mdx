@@ -1,0 +1,61 @@
+---
+title: "Semantic Sensor"
+description: "Semantic instance segmentation sensor"
+---
+
+The semantic sensor returns per-pixel semantic instance IDs. It uses the same `CameraSensorSpec` as other visual sensors, with `sensor_type = SensorType.SEMANTIC`.
+
+## Configuration
+
+```python
+import habitat_sim
+
+semantic_spec = habitat_sim.CameraSensorSpec()
+semantic_spec.uuid = "semantic_sensor"
+semantic_spec.sensor_type = habitat_sim.SensorType.SEMANTIC
+semantic_spec.resolution = [480, 640]
+semantic_spec.position = [0.0, 1.5, 0.0]
+```
+
+You must also enable semantic mesh loading on the simulator:
+
+```python
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_id = "path/to/scene.glb"
+sim_cfg.load_semantic_mesh = True  # required for semantic sensor
+```
+
+<Warning>
+  Semantic sensors require a scene dataset that includes semantic annotations. Test scenes provided by `habitat_test_scenes` do **not** include semantic annotations. Use Matterport3D or HM3D-Semantics for semantic testing.
+</Warning>
+
+## Output
+
+Semantic observations are returned as `np.ndarray` of shape `[H, W]`, dtype `uint32`.
+
+Each pixel value is the **instance ID** of the object occupying that pixel. Background or unlabeled regions return `0`.
+
+```python
+observations = sim.step("move_forward")
+semantic = observations["semantic_sensor"]   # shape [H, W], uint32
+
+unique_ids = np.unique(semantic)
+print("Visible object IDs:", unique_ids)
+```
+
+## Scene semantic annotations
+
+Access the semantic scene graph to map instance IDs to object categories:
+
+```python
+scene = sim.semantic_scene
+for obj in scene.objects:
+    if obj is not None:
+        print(f"ID {obj.id}: category={obj.category.name()}, region={obj.region.id}")
+```
+
+## See also
+
+- [CameraSensorSpec](/api/sensors/camera)
+- [Depth sensor](/api/sensors/depth)
+- [Datasets](/guides/datasets)

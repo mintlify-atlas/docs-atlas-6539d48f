@@ -1,0 +1,152 @@
+---
+title: "GreedyGeodesicFollower"
+description: "API reference for GreedyGeodesicFollower"
+---
+
+```python
+from habitat_sim import GreedyGeodesicFollower
+```
+
+`GreedyGeodesicFollower` translates geodesic paths into sequences of discrete agent actions. It greedily fits `move_forward`, `turn_left`, and `turn_right` actions to follow the shortest path to a goal.
+
+<Note>
+  The planner assumes perfect (noiseless) actuation. It requires `move_forward`, `turn_left`, and `turn_right` to be present in the agent's action space.
+</Note>
+
+## Creating a follower
+
+Use `sim.make_greedy_follower()`:
+
+```python
+follower = sim.make_greedy_follower(
+    agent_id=0,
+    goal_radius=0.2,
+    stop_key="stop",
+    forward_key="move_forward",
+    left_key="turn_left",
+    right_key="turn_right",
+    fix_thrashing=True,
+    thrashing_threshold=16,
+)
+```
+
+Or construct directly:
+
+```python
+follower = habitat_sim.GreedyGeodesicFollower(
+    pathfinder=sim.pathfinder,
+    agent=sim.get_agent(0),
+    goal_radius=0.2,
+    stop_key="stop",
+    forward_key="move_forward",
+    left_key="turn_left",
+    right_key="turn_right",
+)
+```
+
+## Constructor parameters
+
+<ParamField path="pathfinder" type="PathFinder" required>
+  The `PathFinder` instance with the NavMesh loaded.
+</ParamField>
+
+<ParamField path="agent" type="Agent" required>
+  The agent to generate actions for.
+</ParamField>
+
+<ParamField path="goal_radius" type="float | None">
+  Distance threshold (meters) at which the agent is considered to have reached the goal. Default: `None` (uses agent radius).
+</ParamField>
+
+<ParamField path="stop_key" type="Any | None">
+  Action key to return when the goal is reached. If `None`, returns `GreedyFollowerCodes.STOP`.
+</ParamField>
+
+<ParamField path="forward_key" type="Any | None">
+  Action key for moving forward. If `None`, returns `GreedyFollowerCodes.FORWARD`.
+</ParamField>
+
+<ParamField path="left_key" type="Any | None">
+  Action key for turning left. If `None`, returns `GreedyFollowerCodes.LEFT`.
+</ParamField>
+
+<ParamField path="right_key" type="Any | None">
+  Action key for turning right. If `None`, returns `GreedyFollowerCodes.RIGHT`.
+</ParamField>
+
+<ParamField path="fix_thrashing" type="bool">
+  Prevent oscillation between left/right turns. Default: `True`.
+</ParamField>
+
+<ParamField path="thrashing_threshold" type="int">
+  Number of consecutive turns before thrashing suppression activates. Default: `16`.
+</ParamField>
+
+## Methods
+
+### next_action_along
+
+```python
+follower.next_action_along(goal: np.ndarray) -> Any
+```
+
+Return the next action to take toward the goal position.
+
+Returns the configured action key (e.g., `"move_forward"`, `"turn_left"`, `"stop"`), or a `GreedyFollowerCodes` enum value if no action keys were configured.
+
+### find_path
+
+```python
+follower.find_path(goal: np.ndarray) -> List[Any]
+```
+
+Return the complete sequence of actions to reach the goal.
+
+```python
+goal = pathfinder.get_random_navigable_point()
+actions = follower.find_path(goal)
+
+for action in actions:
+    observations = sim.step(action)
+```
+
+## GreedyFollowerCodes
+
+Returned by `next_action_along` when action keys are not configured:
+
+| Code | Description |
+|---|---|
+| `GreedyFollowerCodes.STOP` | Agent has reached the goal |
+| `GreedyFollowerCodes.FORWARD` | Move forward |
+| `GreedyFollowerCodes.LEFT` | Turn left |
+| `GreedyFollowerCodes.RIGHT` | Turn right |
+| `GreedyFollowerCodes.ERROR` | No valid path found |
+
+## Full example
+
+```python
+import habitat_sim
+import numpy as np
+
+follower = sim.make_greedy_follower(
+    agent_id=0,
+    goal_radius=0.2,
+    stop_key="stop",
+)
+
+# Sample a random goal
+goal = sim.pathfinder.get_random_navigable_point()
+
+max_steps = 500
+for step in range(max_steps):
+    action = follower.next_action_along(goal)
+    if action == "stop":
+        print(f"Goal reached in {step} steps!")
+        break
+    obs = sim.step(action)
+```
+
+## See also
+
+- [Navigation guide](/concepts/navigation)
+- [PathFinder reference](/api/nav/pathfinder)

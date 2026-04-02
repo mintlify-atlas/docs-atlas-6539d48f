@@ -1,0 +1,148 @@
+---
+title: "Datasets"
+description: "Download and use 3D scene datasets with Habitat-Sim"
+---
+
+Habitat-Sim supports a wide range of 3D scene datasets. Use the built-in data download utility to fetch datasets programmatically.
+
+## Data download utility
+
+```bash
+python -m habitat_sim.utils.datasets_download --uids <uid> --data-path data/
+```
+
+Browse the full collection of Habitat-ready datasets and assets on [Hugging Face](https://huggingface.co/ai-habitat).
+
+## Test scenes
+
+Quick test scenes for development and unit testing:
+
+```bash
+python -m habitat_sim.utils.datasets_download \
+  --uids habitat_test_scenes \
+  --data-path data/
+```
+
+Example objects for testing:
+
+```bash
+python -m habitat_sim.utils.datasets_download \
+  --uids habitat_example_objects \
+  --data-path data/
+```
+
+<Note>
+  Test scenes do not include semantic annotations. For semantic sensor testing, use a dataset with semantic support such as Matterport3D.
+</Note>
+
+## Habitat-Matterport 3D (HM3D)
+
+HM3D is the largest dataset of 3D indoor spaces for embodied AI research, containing over 1,000 spaces from 112 buildings.
+
+### Access
+
+1. Navigate to [https://my.matterport.com/settings/account/devtools](https://my.matterport.com/settings/account/devtools)
+2. Generate an API token
+3. Use the token ID as `--username` and token secret as `--password`
+
+### Download
+
+```bash
+# Minival split
+python -m habitat_sim.utils.datasets_download \
+  --username <api-token-id> \
+  --password <api-token-secret> \
+  --uids hm3d_minival_v0.2 \
+  --data-path data/
+
+# Download only semantic annotations
+python -m habitat_sim.utils.datasets_download \
+  --uids hm3d_semantics \
+  --data-path data/
+```
+
+### Loading HM3D scenes
+
+```python
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_dataset_config_file = "data/scene_datasets/hm3d/hm3d_basis.scene_dataset_config.json"
+sim_cfg.scene_id = "data/scene_datasets/hm3d/val/00800-TEEsavR23oF/TEEsavR23oF.basis.glb"
+```
+
+## Habitat Synthetic Scenes Dataset (HSSD)
+
+HSSD contains 211 high-quality synthetic indoor scenes with semantics and furniture assets.
+
+```bash
+python -m habitat_sim.utils.datasets_download \
+  --uids hssd-hab \
+  --data-path data/
+```
+
+## Matterport3D (MP3D)
+
+The original Matterport3D dataset with 90 building-scale scenes. Requires a signed agreement with Matterport.
+
+After obtaining access, download using the Matterport download script and point Habitat-Sim at the scene dataset config:
+
+```python
+sim_cfg.scene_dataset_config_file = "data/scene_datasets/mp3d/mp3d.scene_dataset_config.json"
+```
+
+## Gibson
+
+The Gibson dataset contains 572 spaces. Requires signing the Gibson license.
+
+## Replica
+
+High-quality reconstructions of 18 indoor spaces from Meta AI.
+
+## ReplicaCAD
+
+CAD-modeled replica scenes with per-object semantic labels and physics-ready object assets.
+
+```bash
+python -m habitat_sim.utils.datasets_download \
+  --uids replica_cad_dataset \
+  --data-path data/
+```
+
+## YCB Objects
+
+The [YCB Benchmark](https://www.ycbbenchmarks.com/) provides 77 common household objects with accurate 3D models suitable for manipulation tasks.
+
+```bash
+python -m habitat_sim.utils.datasets_download \
+  --uids ycb \
+  --data-path data/
+```
+
+## Loading a scene dataset
+
+Point the simulator at a scene dataset config file to enable multi-scene management via the `MetadataMediator`:
+
+```python
+sim_cfg = habitat_sim.SimulatorConfiguration()
+sim_cfg.scene_dataset_config_file = "data/scene_datasets/replica_cad/replicaCAD.scene_dataset_config.json"
+sim_cfg.scene_id = "apt_0"
+
+cfg = habitat_sim.Configuration(sim_cfg, [agent_cfg])
+sim = habitat_sim.Simulator(cfg)
+```
+
+## Previewing scenes
+
+Use the interactive viewer to inspect dataset assets before using them in training:
+
+```bash
+# Python viewer
+python examples/viewer.py --scene data/scene_datasets/replica_cad/stages/Baked_sc0_staging_00.glb
+
+# C++ viewer
+viewer data/scene_datasets/habitat-test-scenes/skokloster-castle.glb
+```
+
+## See also
+
+- [Quickstart](/quickstart)
+- [Simulator concepts](/concepts/simulator)
